@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Killer Sudoku — sudoku.com Clone</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -52,6 +52,7 @@
     <div class="board-wrap" id="boardWrap">
       <div class="grid" id="grid"></div>
       <div class="pause-overlay" id="pauseOverlay" style="display:none"><div style="text-align:center"><h3>⏸ Paused</h3><p style="color:var(--muted);margin-top:6px">Press Resume to continue</p><button class="btn btn-primary" style="margin-top:14px" onclick="togglePause()">Resume</button></div></div>
+      <div class="pause-overlay" id="gameOverOverlay" style="display:none"><div style="text-align:center"><h3 style="color:var(--danger)">Game Over</h3><p style="color:var(--muted);margin-top:6px">You made 3 mistakes</p><div style="display:flex;gap:10px;justify-content:center;margin-top:14px"><button class="btn btn-ghost" onclick="undo()" style="border:1px solid #e6eef8">↩ Undo</button><button class="btn btn-primary" onclick="newGame()">★ New Game</button></div></div></div>
     </div>
     <div class="controls-row">
       <button class="ctrl" id="undoBtn"><i>↩</i> Undo</button>
