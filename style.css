@@ -1,0 +1,106 @@
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#4a90e2;--blue-dark:#3a7bd5;--orange:#ff8a1e;--bg:#eef3fb;--card:#ffffff;--text:#2c3e50;--muted:#8a9ab0;--grid:#cbd8ec;--grid-inner:#c0cfe7;--grid-bold:#162f4d;--outer:#162f4d;--cage:#2b3f5e;--danger:#ff5a5a;--success:#3ec48a}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+a{color:inherit;text-decoration:none}
+.topbar{height:56px;background:#fff;border-bottom:1px solid #e6eef8;display:flex;align-items:center;justify-content:space-between;padding:0 18px;position:sticky;top:0;z-index:10}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;letter-spacing:-.02em}
+.brand b{color:var(--blue)} .brand em{font-style:normal;color:#ff8a1e}
+.nav{display:flex;gap:18px;font-weight:600;font-size:14px;color:#5a6d8a}
+.nav a.active{color:var(--blue);border-bottom:2px solid var(--blue);padding-bottom:4px}
+.top-actions{display:flex;align-items:center;gap:10px}
+.btn{border:0;border-radius:10px;padding:9px 16px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:.15s}
+.btn-primary{background:var(--orange);color:#fff;box-shadow:0 4px 12px rgba(255,138,30,.35)}
+.btn-primary:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.btn-ghost{background:#eef3fb;color:#5a6d8a}
+.btn-ghost:hover{background:#e3ecfa}
+.icon-btn{width:44px;height:44px;border-radius:12px;border:1px solid #e6eef8;background:#fff;display:grid;place-items:center;cursor:pointer;font-size:18px}
+.icon-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.wrap{max-width:1120px;margin:14px auto;width:100%;padding:0 16px;display:grid;grid-template-columns:220px 1fr 220px;gap:18px;align-items:start}
+.card{background:var(--card);border-radius:16px;box-shadow:0 8px 30px rgba(60,90,140,.08);padding:14px}
+.left-stack,.right-stack{display:flex;flex-direction:column;gap:14px}
+.timer-card{display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
+.timer{font-size:22px;font-weight:800;letter-spacing:.02em}
+.pill{font-size:12px;font-weight:800;padding:4px 8px;border-radius:999px;background:#eef3fb;color:#6b7a99}
+.difficulty{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.diff-btn{padding:10px;border-radius:12px;border:2px solid #eef3fb;background:#f7f9fd;font-weight:800;cursor:pointer;color:#5a6d8a}
+.diff-btn.active{border-color:var(--blue);background:#eaf2ff;color:var(--blue)}
+.stats{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);font-weight:600}
+.stats b{color:var(--text)}
+.board-card{padding:18px}
+.board-wrap{position:relative;aspect-ratio:1;background:#fff;border-radius:2px;overflow:hidden;border:2.8px solid var(--outer);user-select:none}
+.grid{display:grid;grid-template-columns:repeat(9,1fr);grid-template-rows:repeat(9,1fr);width:100%;height:100%;position:relative;background:#fff}
+/* layering: thin cell grid (z0) → cage dashes (z1) → thick 3×3 + outer (z4) on top, like the reference */
+.cell{position:relative;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;cursor:pointer;background:#fff;overflow:visible}
+/* thin light cell separators */
+.cell::before{content:'';position:absolute;inset:0;border-right:1px solid var(--grid-inner);border-bottom:1px solid var(--grid-inner);pointer-events:none;z-index:0}
+.cell:nth-child(9n)::before{border-right:0}
+.cell:nth-child(n+73)::before{border-bottom:0}
+/* remove thin inner grid where thick 3×3 lines sit, so solid and thin never overlap */
+.cell.box-right::before{border-right:0!important}
+.cell.box-bottom::before{border-bottom:0!important}
+.cell.selected{background:#b9d0ff!important}
+.cell.same-value{background:#b9d0ff!important}
+.cell.error{background:#ffe6e6!important;color:var(--danger)}
+.cell.given{color:#111}
+.cell.user{color:#111}
+.cell.hint{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(.8)}100%{transform:scale(1)}}
+/* Thick 3x3 box lines - above cage dashes & thin grid - like sudoku.com print */
+.grid::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:4;
+  background:
+    linear-gradient(to right, var(--grid-bold) 2.2px, transparent 2.2px) 33.333% 0 / 2.2px 100% no-repeat,
+    linear-gradient(to right, var(--grid-bold) 2.2px, transparent 2.2px) 66.666% 0 / 2.2px 100% no-repeat,
+    linear-gradient(to bottom, var(--grid-bold) 2.2px, transparent 2.2px) 0 33.333% / 100% 2.2px no-repeat,
+    linear-gradient(to bottom, var(--grid-bold) 2.2px, transparent 2.2px) 0 66.666% / 100% 2.2px no-repeat;
+}
+.cage-sum{position:absolute;top:0.6px;left:2px;font-size:7.5px;font-weight:800;color:var(--cage);letter-spacing:0;line-height:1;pointer-events:none;z-index:5;padding:1.5px 3px 1px;background:#fff;border-radius:1px}
+/* total sits ON the top dashed edge — its opaque background erases the dash underneath, leaving a line-free overlap; notes grid stays at same position in every cell (no per-cage offset) */
+.cage-dash{isolation:isolate}
+/* background mask must follow cell state so no white patch shows on highlighted/error cells */
+.cell.selected .cage-sum{background:#b9d0ff}
+.cell.same-value .cage-sum{background:#b9d0ff}
+.cell.error .cage-sum{background:#ffe6e6}
+.cage-border{position:absolute;inset:0;pointer-events:none;z-index:1}
+.cage-dash{position:absolute;pointer-events:none;border-radius:1px;opacity:0.55}
+/* per-cage: inset 2px so parallel dashes of adjacent cages stay ~4px apart;
+   each side inset 2px on its perpendicular axis so corners meet at a clean right angle with no extension beyond */
+.cage-dash.top{left:2px;right:2px;top:2px;height:1px;background:repeating-linear-gradient(to right,var(--cage) 0 4px, transparent 4px 8px)}
+.cage-dash.bottom{left:2px;right:2px;bottom:2px;height:1px;background:repeating-linear-gradient(to right,var(--cage) 0 4px, transparent 4px 8px)}
+.cage-dash.left{top:2px;bottom:2px;left:2px;width:1px;background:repeating-linear-gradient(to bottom,var(--cage) 0 4px, transparent 4px 8px)}
+.cage-dash.right{top:2px;bottom:2px;right:2px;width:1px;background:repeating-linear-gradient(to bottom,var(--cage) 0 4px, transparent 4px 8px)}
+/* parallel to a bold 3×3 solid: keep the spacing (offset inward); perpendicular may overlap so no offset */
+.cage-dash.on-bold.top{top:3.2px}
+.cage-dash.on-bold.bottom{bottom:3.2px}
+.cage-dash.on-bold.left{left:3.2px}
+.cage-dash.on-bold.right{right:3.2px}
+.notes{position:absolute;inset:3px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:0;font-size:9px;font-weight:700;color:#6b7a99;line-height:1}
+.notes span{width:100%;height:100%;display:grid;place-items:center;text-align:center;border-radius:2px;transition:.12s;align-self:stretch;justify-self:stretch}
+.notes span.note-hl{background:var(--blue);color:#fff;font-weight:800;box-shadow:0 1px 4px rgba(74,144,226,.4);aspect-ratio:1 / 1;width:74%;height:74%;max-width:15px;max-height:15px;place-self:center;display:grid;place-items:center;border-radius:2px}
+.pause-overlay{position:absolute;inset:0;background:rgba(255,255,255,.92);display:grid;place-items:center;z-index:5;backdrop-filter:blur(4px)}
+.pause-overlay h3{font-size:28px;font-weight:800}
+.controls-row{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+.ctrl{flex:1;min-width:62px;background:#fff;border:1px solid #e6eef8;border-radius:12px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;font-weight:700;font-size:12px;color:#5a6d8a}
+.ctrl:hover{border-color:var(--blue);color:var(--blue)}
+.ctrl.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.ctrl i{font-size:18px;font-style:normal}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.num{height:52px;border-radius:12px;border:0;background:var(--blue);color:#fff;font-size:22px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(74,144,226,.3);position:relative}
+.num.lightning-active{background:#162f4d!important;box-shadow:0 6px 14px rgba(22,47,77,.55);transform:translateY(-1px);outline:2px solid #ff8a1e}
+.num:hover{filter:brightness(1.05);transform:translateY(-1px)}
+.num small{position:absolute;bottom:4px;right:6px;font-size:10px;opacity:.7}
+.num:disabled{opacity:.35;cursor:not-allowed;transform:none}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.action-btn{padding:12px;border-radius:12px;border:1px solid #e6eef8;background:#fff;font-weight:800;cursor:pointer}
+.action-btn.primary{background:var(--orange);color:#fff;border-color:var(--orange)}
+.howto{font-size:13px;line-height:1.6;color:#5a6d8a}
+.howto h4{color:var(--text);margin-bottom:6px}
+.toggle{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f7f9fd;border-radius:12px;font-weight:700;font-size:13px}
+.toggle .toggle-label{display:inline-flex;align-items:center;gap:0;flex:1;text-align:left}
+.toggle .toggle-icon{display:inline-flex;align-items:center;justify-content:center;width:18px;flex:0 0 18px;text-align:center}
+.toggle .switch{margin-left:12px;flex-shrink:0}
+.switch{width:44px;height:26px;background:#d6e2f2;border-radius:999px;position:relative;cursor:pointer;transition:.2s}
+.switch::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.switch.on{background:var(--blue)}
+.switch.on::after{left:21px}
+.footer{margin-top:auto;padding:14px;text-align:center;color:var(--muted);font-size:12px}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;max-width:520px}.left-stack{order:2}.board-card{order:1}.right-stack{order:3}}
