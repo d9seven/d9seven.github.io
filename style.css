@@ -74,9 +74,9 @@ a{color:inherit;text-decoration:none}
 .cage-dash.on-bold.bottom{bottom:3.2px}
 .cage-dash.on-bold.left{left:3.2px}
 .cage-dash.on-bold.right{right:3.2px}
-.notes{position:absolute;inset:3.6px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:0;font-size:13px;font-weight:600;color:#6b7a99;line-height:1;place-items:center}
+.notes{position:absolute;inset:4px;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:0;font-size:9px;font-weight:600;color:#6b7a99;line-height:1;place-items:center}
 .notes span{width:100%;height:100%;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:2px;transition:.12s;line-height:1;padding:0}
-.notes span.note-hl{background:var(--blue);color:#fff;font-weight:700;box-shadow:0 1px 3px rgba(74,144,226,.35);width:17px;height:17px;max-width:17px;max-height:17px;min-width:17px;min-height:17px;flex:0 0 17px;align-self:center;justify-self:center;display:flex;align-items:center;justify-content:center;border-radius:3px;line-height:1;padding:0;font-size:13px}
+.notes span.note-hl{background:var(--blue);color:#fff;font-weight:700;box-shadow:0 1px 3px rgba(74,144,226,.35);width:12px;height:12px;max-width:12px;max-height:12px;min-width:12px;min-height:12px;flex:0 0 12px;align-self:center;justify-self:center;display:flex;align-items:center;justify-content:center;border-radius:2px;line-height:1;padding:0;font-size:9px}
 .pause-overlay{position:absolute;inset:0;background:rgba(255,255,255,.92);display:grid;place-items:center;z-index:5;backdrop-filter:blur(4px)}
 .pause-overlay h3{font-size:28px;font-weight:800}
 .controls-row{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
@@ -163,7 +163,7 @@ a{color:inherit;text-decoration:none}
   .num small{font-size:9px;bottom:3px;right:5px}
   .cell{font-size:17px}
   .cage-sum{font-size:6px;padding:1.5px 3px 1px;top:0.6px;left:2px}
-  .notes{inset:2.6px !important;font-size:9px !important}
+  .notes{inset:4px !important;font-size:7px !important}
   .notes span.note-hl{width:9px;height:9px;max-width:9px;max-height:9px;min-width:9px;min-height:9px;flex:0 0 9px;border-radius:2px;font-size:7px}
   .timer-card{padding:8px 10px}
   .timer{font-size:17px}
