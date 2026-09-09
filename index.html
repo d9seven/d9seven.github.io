@@ -8,26 +8,19 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="topbar" style="justify-content:center">
+<header class="topbar">
   <nav class="nav">
     <a class="active" href="#">Killer</a><a href="#">Sudoku</a>
   </nav>
+  <div class="header-timer">
+    <span class="header-timer-label">TIME</span>
+    <span class="timer" id="timer">00:00</span>
+    <span class="pill" id="difficultyPill">Medium</span>
+  </div>
 </header>
 
 <div class="wrap">
   <aside class="left-stack">
-    <div class="card timer-card">
-      <div>
-        <div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.08em">TIME</div>
-        <div class="timer" id="timer">00:00</div>
-      </div>
-      <span class="pill" id="difficultyPill">Medium</span>
-    </div>
-    <div class="card" style="padding:12px;display:flex;gap:8px">
-      <button class="icon-btn" id="pauseBtn" title="Pause" style="flex:0 0 44px">⏸</button>
-      <button class="btn btn-primary" id="newGameBtn" style="flex:1;justify-content:center">★ New Game</button>
-    </div>
-
     <div class="card">
       <div style="font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:8px">⚙ Difficulty</div>
       <div class="difficulty">
@@ -38,12 +31,6 @@
       </div>
       <div class="stats" style="margin-top:12px">
         <span>Mistakes <b id="mistakes">0/3</b></span><span id="progress">0% filled</span>
-      </div>
-      <div class="toggle" style="margin-top:10px">
-        <span class="toggle-label"><span class="toggle-icon">✓</span> Auto-check</span><div class="switch on" id="autoCheckSwitch"></div>
-      </div>
-      <div class="toggle" style="margin-top:8px">
-        <span class="toggle-label"><span class="toggle-icon">⚡</span> Lightning</span><div class="switch on" id="lightningSwitch"></div>
       </div>
     </div>
   </aside>
@@ -56,10 +43,11 @@
     </div>
     <div class="controls-row">
       <button class="ctrl" id="undoBtn"><i>↩</i> Undo</button>
-      <button class="ctrl" id="eraseBtn"><i>⌫</i> Erase</button>
       <button class="ctrl" id="notesBtn"><i>✎</i> Notes</button>
       <button class="ctrl" id="fillNotesBtn" title="Auto-fill candidates in all empty cells"><i>▦</i> Fill Notes</button>
       <button class="ctrl" id="hintBtn"><i>💡</i> Hint</button>
+      <button class="ctrl active" id="lightningSwitch" title="Toggle Lightning"><i>⚡</i> Lightning</button>
+      <button class="ctrl" id="newGameBtn" title="Start a new game"><i>★</i> New Game</button>
     </div>
   </main>
 
@@ -73,8 +61,6 @@
     </div>
   </aside>
 </div>
-
-<div class="footer">Clone of <b>sudoku.com/killer</b> — single-file HTML • cage sums • notes • keyboard • timer • no external deps</div>
 
 <script src="app.js"></script>
 </body>
