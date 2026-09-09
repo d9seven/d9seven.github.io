@@ -75,6 +75,7 @@ function clearLightningDigit(){
   render();
 }
 let timerSec=0, timerId=null, paused=false;
+let gameOver=false;
 let history=[];
 let cageCellsSet=[];
 
@@ -231,6 +232,19 @@ function buildMaps(){
   cages.forEach((cg,idx)=>{ cageSums[idx]=cg.sum; cg.cells.forEach(([r,c])=> cageMap[r][c]=idx); });
 }
 
+function showGameOver(){
+  gameOver=true;
+  clearInterval(timerId);
+  paused=true;
+  const el=document.getElementById('gameOverOverlay');
+  if(el) el.style.display='grid';
+}
+function hideGameOver(){
+  gameOver=false;
+  paused=false;
+  const el=document.getElementById('gameOverOverlay');
+  if(el) el.style.display='none';
+}
 function newGame(diff){
   if(diff) difficulty=diff;
   document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('active', b.dataset.diff===difficulty));
@@ -242,6 +256,7 @@ function newGame(diff){
   notes=Array(9).fill(0).map(()=>Array(9).fill(0).map(()=>new Set()));
   given=Array(9).fill(0).map(()=>Array(9).fill(false));
   selected=null; mistakes=0; isNoteMode=false; lightningDigit=null; history=[];
+  hideGameOver();
   document.getElementById('mistakes').textContent='0/3';
   updateNotesBtn();
   updateLightningUI();
@@ -254,6 +269,7 @@ function startTimer(){ clearInterval(timerId); timerId=setInterval(()=>{ if(!pau
 function resetTimer(){ timerSec=0; paused=false; document.getElementById('pauseOverlay').style.display='none'; document.getElementById('pauseBtn').textContent='⏸'; renderTimer(); }
 function renderTimer(){ const m=String(Math.floor(timerSec/60)).padStart(2,'0'), s=String(timerSec%60).padStart(2,'0'); document.getElementById('timer').textContent=`${m}:${s}` }
 function togglePause(){
+  if(gameOver) return;
   paused=!paused;
   document.getElementById('pauseOverlay').style.display= paused?'grid':'none';
   document.getElementById('pauseBtn').textContent= paused?'▶':'⏸';
@@ -268,6 +284,10 @@ function undo(){
   const h=history.pop();
   board=h.board; notes=h.notes; mistakes=h.mistakes;
   document.getElementById('mistakes').textContent=`${mistakes}/3`;
+  if(gameOver && mistakes < 3){
+    hideGameOver();
+    startTimer();
+  }
   render();
 }
 
@@ -293,6 +313,10 @@ function getErrors(){
     // also if sum > cage sum even before fill, mark
     if(sum > cg.sum) cg.cells.forEach(([r,c])=> err[r][c]=true);
   });
+  // incorrect vs solution -> red (Killer Sudoku: any wrong digit is an error)
+  if(solution){
+    for(let r=0;r<9;r++) for(let c=0;c<9;c++) if(board[r][c] && solution[r][c] && board[r][c]!==solution[r][c]) err[r][c]=true;
+  }
   return err;
 }
 
@@ -314,6 +338,7 @@ function updateCageInfo(){
 }
 
 function setValue(n){
+  if(gameOver) return;
   if(!selected) return;
   const [r,c]=selected;
   if(given[r][c]) return;
@@ -342,19 +367,21 @@ function setValue(n){
     if(board[r][c] && board[r][c]!==0 && solution[r][c]!==board[r][c] && autoCheck){
       mistakes++;
       document.getElementById('mistakes').textContent=`${mistakes}/3`;
-      if(mistakes>=3){ setTimeout(()=>alert('3 mistakes — game over. Starting new game.'),100); setTimeout(()=>newGame(),800); return; }
+      if(mistakes>=3){ render(); showGameOver(); return; }
     }
   }
   render();
   checkWin();
 }
 function erase(){
+  if(gameOver) return;
   if(!selected) return;
   const [r,c]=selected; if(given[r][c]) return;
   pushHistory();
   board[r][c]=0; notes[r][c].clear(); render();
 }
 function hint(){
+  if(gameOver) return;
   // pick a random empty cell (not yet filled) — ignores current selection, like sudoku.com
   const empties=[];
   for(let r=0;r<9;r++) for(let c=0;c<9;c++) if(board[r][c]===0) empties.push([r,c]);
@@ -461,6 +488,7 @@ function getCandidates(r,c){
 }
 
 function fillNotes(){
+  if(gameOver) return;
   // fill pencil marks (candidates) in every empty cell; skip cells that already have a value
   let filledCount=0;
   const anyEmpty = board.some(row=>row.some(v=>v===0));
@@ -487,7 +515,15 @@ function fillNotes(){
 function render(){
   const grid=document.getElementById('grid');
   grid.innerHTML='';
-  const errors = autoCheck ? getErrors() : Array(9).fill(0).map(()=>Array(9).fill(false));
+  // incorrect numbers are always red, even when Auto-check is off
+  let errors;
+  if(autoCheck) errors = getErrors();
+  else {
+    errors = Array(9).fill(0).map(()=>Array(9).fill(false));
+    if(solution){
+      for(let r=0;r<9;r++) for(let c=0;c<9;c++) if(board[r][c] && solution[r][c] && board[r][c]!==solution[r][c]) errors[r][c]=true;
+    }
+  }
   const selVal = selected ? board[selected[0]][selected[1]] : null;
   // Lightning ON: highlight only the armed digit; don't carry over the old selection highlight from when Lightning was OFF
   const highlightNum = lightningMode ? lightningDigit : (selVal && selVal !== 0 ? selVal : null);
@@ -552,6 +588,7 @@ function render(){
     if(isRight){ const d=document.createElement('div'); d.className='cage-dash right' + (boldRight?' on-bold':''); div.appendChild(d); }
 
     div.addEventListener('click',()=>{
+      if(gameOver) return;
       if(lightningMode && lightningDigit){
         if(given[r][c]) { selectCell(r,c); return; }
         // Notes ON: cells with a main value are untouched (spec)
@@ -571,7 +608,7 @@ function render(){
             for(let rr=br;rr<br+3;rr++) for(let cc=bc;cc<bc+3;cc++){ if(rr!==r||cc!==c) notes[rr][cc].delete(lightningDigit); }
             if(solution[r][c]!==lightningDigit && autoCheck){
               mistakes++; document.getElementById('mistakes').textContent=`${mistakes}/3`;
-              if(mistakes>=3){ render(); setTimeout(()=>alert('3 mistakes — game over. Starting new game.'),80); setTimeout(()=>newGame(),700); return; }
+              if(mistakes>=3){ render(); showGameOver(); return; }
             }
           }
         }
@@ -652,6 +689,8 @@ document.getElementById('lightningSwitch').addEventListener('click',function(){
 });
 
 document.addEventListener('keydown',e=>{
+  if(gameOver && (e.key==='z' || e.key==='Z') && (e.ctrlKey||e.metaKey)){ undo(); e.preventDefault(); return; }
+  if(gameOver) return;
   if(e.key==='n' || e.key==='N'){ isNoteMode=!isNoteMode; updateNotesBtn(); e.preventDefault(); return; }
   // Lightning hotkey: pressing 1-9 arms highlight without needing selection
   if(lightningMode && e.key>='1' && e.key<='9'){
