@@ -56,7 +56,7 @@ let mistakes=0;
 // Lightning helpers — armed digit highlights everywhere and drives grid taps
 function updateLightningUI(){
   const sw=document.getElementById('lightningSwitch');
-  if(sw) sw.classList.toggle('on', lightningMode);
+  if(sw) sw.classList.toggle('active', lightningMode);
   document.querySelectorAll('.num').forEach(b=>{
     const n=parseInt(b.dataset.n,10);
     b.classList.toggle('lightning-active', !!lightningMode && lightningDigit===n);
@@ -126,8 +126,16 @@ function generateCages(sol, diffKey){
 
   for(const [sr,sc] of cellsList){
     if(used[sr][sc]) continue;
-    let target = Math.max(minSize, Math.min(cfg.max, Math.round(cfg.avg + (Math.random()*2-1)*1.2 )));
-    if(minSize === 1 && Math.random()<0.08) target=1;
+    let target;
+    if(diffKey==='expert'){
+      // Expert: 50% cages size 2, remainder randomized (2–3)
+      const r=Math.random();
+      if(r < 0.50) target=2;
+      else target = cfg.min + Math.floor(Math.random() * (cfg.max - cfg.min + 1));
+    } else {
+      target = Math.max(minSize, Math.min(cfg.max, Math.round(cfg.avg + (Math.random()*2-1)*1.2 )));
+      if(minSize === 1 && Math.random()<0.08) target=1;
+    }
     // Killer rule: no repeat inside a cage, so cage must contain distinct solution digits.
     // A cage of k distinct digits 1-9 has feasible sum interval:
     //   min(k)=1+2+...+k, max(k)=9+8+...+(10-k).  E.g. k=3 => 6..24, so 25 is impossible.
@@ -266,13 +274,13 @@ function newGame(diff){
 }
 
 function startTimer(){ clearInterval(timerId); timerId=setInterval(()=>{ if(!paused){ timerSec++; renderTimer(); }},1000); }
-function resetTimer(){ timerSec=0; paused=false; document.getElementById('pauseOverlay').style.display='none'; document.getElementById('pauseBtn').textContent='⏸'; renderTimer(); }
+function resetTimer(){ timerSec=0; paused=false; document.getElementById('pauseOverlay').style.display='none'; const pb=document.getElementById('pauseBtn'); if(pb) pb.textContent='⏸'; renderTimer(); }
 function renderTimer(){ const m=String(Math.floor(timerSec/60)).padStart(2,'0'), s=String(timerSec%60).padStart(2,'0'); document.getElementById('timer').textContent=`${m}:${s}` }
 function togglePause(){
   if(gameOver) return;
   paused=!paused;
   document.getElementById('pauseOverlay').style.display= paused?'grid':'none';
-  document.getElementById('pauseBtn').textContent= paused?'▶':'⏸';
+  const pb=document.getElementById('pauseBtn'); if(pb) pb.textContent= paused?'▶':'⏸';
 }
 
 function pushHistory(){
@@ -668,7 +676,6 @@ document.getElementById('checkBtn')?.addEventListener('click',doCheck);
 document.getElementById('solveBtn')?.addEventListener('click',solvePuzzle);
 document.getElementById('fillNotesBtn').addEventListener('click',fillNotes);
 document.getElementById('undoBtn').addEventListener('click',undo);
-document.getElementById('eraseBtn').addEventListener('click',erase);
 document.getElementById('notesBtn').addEventListener('click',()=>{
   // per spec Notes button always toggles pencil mode, even with Lightning ON
   isNoteMode=!isNoteMode;
@@ -677,13 +684,13 @@ document.getElementById('notesBtn').addEventListener('click',()=>{
   updateLightningUI();
 });
 document.getElementById('hintBtn').addEventListener('click',hint);
-document.getElementById('pauseBtn').addEventListener('click',togglePause);
+document.getElementById('pauseBtn')?.addEventListener('click',togglePause);
 document.querySelectorAll('.diff-btn').forEach(b=>b.addEventListener('click',()=>newGame(b.dataset.diff)));
-document.getElementById('autoCheckSwitch').addEventListener('click',function(){ autoCheck=!autoCheck; this.classList.toggle('on',autoCheck); render();});
+document.getElementById('autoCheckSwitch')?.addEventListener('click',function(){ autoCheck=!autoCheck; this.classList.toggle('active',autoCheck); render();});
 document.getElementById('lightningSwitch').addEventListener('click',function(){
   lightningMode=!lightningMode;
   if(!lightningMode) lightningDigit=null;
-  this.classList.toggle('on', lightningMode);
+  this.classList.toggle('active', lightningMode);
   updateLightningUI();
   render();
 });
