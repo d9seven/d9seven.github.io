@@ -82,7 +82,7 @@ let cageCellsSet=[];
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function generateSolution(){
   const g=Array(9).fill(0).map(()=>Array(9).fill(0));
-  function valid(r,c,n){for(let i=0;i<9;i++)if(g[r][i]===n||g[i][c]===n) return false; const br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3; for(let rr=br;rr<br+3;rr++)for(let cc=bc;cc<bc+3;cc++)if(g[rr][cc]===n) return false; return true}
+  function valid(r,c,n){for(let i=0;i<9;i++)if(g[r][i]===n||g[i][c]===n) return false; if(r===c) for(let i=0;i<9;i++) if(i!==r && g[i][i]===n) return false; if(r+c===8) for(let i=0;i<9;i++){ const rr=i, cc=8-i; if((rr!==r||cc!==c) && g[rr][cc]===n) return false; } const br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3; for(let rr=br;rr<br+3;rr++)for(let cc=bc;cc<bc+3;cc++)if(g[rr][cc]===n) return false; return true}
   function solve(idx){
     if(idx===81) return true;
     const r=Math.floor(idx/9), c=idx%9;
@@ -91,13 +91,15 @@ function generateSolution(){
     for(const n of nums){ if(valid(r,c,n)){g[r][c]=n; if(solve(idx+1)) return true; g[r][c]=0} }
     return false;
   }
-  // fill diagonal boxes for speed
-  for(let b=0;b<9;b+=3){ const nums=shuffle([1,2,3,4,5,6,7,8,9].slice()); let k=0; for(let r=b;r<b+3;r++)for(let c=b;c<b+3;c++) g[r][c]=nums[k++]}
-  // clear and solve rest? Actually solving from current partially filled will work faster; reset non-diagonal?
-  // We'll just run solver on empty with heuristics — but above diagonal fill+ solver is fast
-  // Clear non-diagonal to avoid conflict: keep diagonal boxes, solve rest
-  // Our solver handles filled cells, so proceed
-  // To ensure full solve, we continue solving sequentially
+  // fill main diagonal with 1-9 for speed (valid for Sudoku X: diagonal cells distinct by construction)
+  // retry with a fresh diagonal permutation in the rare case this one is unsolvable
+  for(let attempt=0;attempt<20;attempt++){
+    for(let r=0;r<9;r++)for(let c=0;c<9;c++) g[r][c]=0;
+    const nums=shuffle([1,2,3,4,5,6,7,8,9].slice()); for(let i=0;i<9;i++) g[i][i]=nums[i];
+    if(solve(0)) return g;
+  }
+  // last resort: solve fully empty (still enforces diagonals via valid())
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++) g[r][c]=0;
   solve(0);
   return g;
 }
@@ -313,6 +315,9 @@ function getErrors(){
     for(let k=0;k<9;k++){ if(k!==c && board[r][k]===v) err[r][c]=err[r][k]=true; if(k!==r && board[k][c]===v) err[r][c]=err[k][c]=true; }
     const br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3;
     for(let rr=br;rr<br+3;rr++)for(let cc=bc;cc<bc+3;cc++) if((rr!==r||cc!==c)&& board[rr][cc]===v) {err[r][c]=true; err[rr][cc]=true}
+    // Sudoku X: both main diagonals must also contain 1-9
+    if(r===c) for(let k=0;k<9;k++) if(k!==r && board[k][k]===v) { err[r][c]=true; err[k][k]=true; }
+    if(r+c===8) for(let k=0;k<9;k++){ const rr=k, cc=8-k; if((rr!==r||cc!==c) && board[rr][cc]===v){ err[r][c]=true; err[rr][cc]=true; } }
   }
   // cage duplicates & sum exceed
   cages.forEach(cg=>{
@@ -367,7 +372,7 @@ function setValue(n){
     notes[r][c].clear();
     if(board[r][c]===n) board[r][c]=0; else {
       board[r][c]=n;
-      // auto-remove this number from notes in same row, column and 3×3 box
+      // auto-remove this number from notes in same row, column, 3×3 box and Sudoku X diagonals
       for(let k=0;k<9;k++){
         if(k!==c) notes[r][k].delete(n);
         if(k!==r) notes[k][c].delete(n);
@@ -377,6 +382,8 @@ function setValue(n){
         if(rr===r && cc===c) continue;
         notes[rr][cc].delete(n);
       }
+      if(r===c) for(let k=0;k<9;k++) if(k!==r) notes[k][k].delete(n);
+      if(r+c===8) for(let k=0;k<9;k++){ const rr=k, cc=8-k; if(rr!==r||cc!==c) notes[rr][cc].delete(n); }
     }
     if(board[r][c] && board[r][c]!==0 && solution[r][c]!==board[r][c] && autoCheck){
       mistakes++;
@@ -412,10 +419,12 @@ function hint(){
   pushHistory();
   const n=solution[r][c];
   board[r][c]=n; notes[r][c].clear();
-  // same auto-cleanup as setValue: remove this number's notes in row/col/box
+  // same auto-cleanup as setValue: remove this number's notes in row/col/box/diagonals
   for(let k=0;k<9;k++){ if(k!==c) notes[r][k].delete(n); if(k!==r) notes[k][c].delete(n); }
   const br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3;
   for(let rr=br;rr<br+3;rr++) for(let cc=bc;cc<bc+3;cc++){ if(rr!==r||cc!==c) notes[rr][cc].delete(n); }
+  if(r===c) for(let k=0;k<9;k++) if(k!==r) notes[k][k].delete(n);
+  if(r+c===8) for(let k=0;k<9;k++){ const rr=k, cc=8-k; if(rr!==r||cc!==c) notes[rr][cc].delete(n); }
   render(); checkWin();
   // flash
   const cellEl=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
@@ -462,8 +471,10 @@ function getCandidates(r,c){
   if(board[r][c]!==0) return [];
   const idx=cageMap[r][c];
   const cage=cages[idx];
-  const usedRow=new Set(), usedCol=new Set(), usedBox=new Set(), usedCage=new Set();
+  const usedRow=new Set(), usedCol=new Set(), usedBox=new Set(), usedCage=new Set(), usedDiag0=new Set(), usedDiag1=new Set();
   for(let k=0;k<9;k++){ if(board[r][k]) usedRow.add(board[r][k]); if(board[k][c]) usedCol.add(board[k][c]); }
+  if(r===c) for(let k=0;k<9;k++) if(board[k][k]) usedDiag0.add(board[k][k]);
+  if(r+c===8) for(let k=0;k<9;k++){ const v=board[k][8-k]; if(v) usedDiag1.add(v); }
   const br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3;
   for(let rr=br;rr<br+3;rr++) for(let cc=bc;cc<bc+3;cc++) if(board[rr][cc]) usedBox.add(board[rr][cc]);
   let cageSumSoFar=0, cageFilled=0;
@@ -478,6 +489,7 @@ function getCandidates(r,c){
   const remainingAfter = totalCells - (cageFilled + 1); // after placing n
   for(let n=1;n<=9;n++){
     if(usedRow.has(n) || usedCol.has(n) || usedBox.has(n) || usedCage.has(n)) continue;
+    if((r===c && usedDiag0.has(n)) || (r+c===8 && usedDiag1.has(n))) continue;
     const sumWith = cageSumSoFar + n;
     if(remainingAfter < 0) continue;
     if(remainingAfter === 0){
@@ -558,6 +570,7 @@ function render(){
     if(!lightningMode && selected && selected[0]===r && selected[1]===c) div.classList.add('selected');
     else if(highlightNum && val===highlightNum && val!==0) div.classList.add('same-value');
     if(errors[r][c]) div.classList.add('error');
+    if(r===c || r+c===8) div.classList.add('diag');
     if(given[r][c]) div.classList.add('given'); else if(val) div.classList.add('user');
     // cage borders
     const idx=cageMap[r][c];
@@ -620,6 +633,8 @@ function render(){
             for(let k=0;k<9;k++){ if(k!==c) notes[r][k].delete(lightningDigit); if(k!==r) notes[k][c].delete(lightningDigit); }
             const br=Math.floor(r/3)*3, bc=Math.floor(c/3)*3;
             for(let rr=br;rr<br+3;rr++) for(let cc=bc;cc<bc+3;cc++){ if(rr!==r||cc!==c) notes[rr][cc].delete(lightningDigit); }
+            if(r===c) for(let k=0;k<9;k++) if(k!==r) notes[k][k].delete(lightningDigit);
+            if(r+c===8) for(let k=0;k<9;k++){ const rr=k, cc=8-k; if(rr!==r||cc!==c) notes[rr][cc].delete(lightningDigit); }
             if(solution[r][c]!==lightningDigit && autoCheck){
               mistakes++; document.getElementById('mistakes').textContent=`${mistakes}/3`;
               if(mistakes>=3){ render(); showGameOver(); return; }
