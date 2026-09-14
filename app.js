@@ -268,6 +268,12 @@ function newGame(diff){
   document.getElementById('mistakes').textContent='0/3';
   updateNotesBtn();
   updateLightningUI();
+  // auto-fill pencil marks at start so player sees candidates immediately
+  for(let r=0;r<9;r++) for(let c=0;c<9;c++){
+    if(board[r][c]!==0 || given[r][c]){ notes[r][c].clear(); continue; }
+    const cand=getCandidates(r,c);
+    notes[r][c]=new Set(cand);
+  }
   resetTimer();
   startTimer();
   render();
