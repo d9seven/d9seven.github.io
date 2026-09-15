@@ -43,7 +43,7 @@ fetchText('sum.csv').then(text=>{
   // we reuse fetchText wrapper below so tests/old Node don't hard-fail
 }).catch(()=>{ /* keep fallback */ });
 
-let difficulty='medium';
+let difficulty='expert';
 let solution, cages, cageMap, cageSums;
 let board, notes, given;
 let selected=null;
@@ -129,11 +129,14 @@ function generateCages(sol, diffKey){
   for(const [sr,sc] of cellsList){
     if(used[sr][sc]) continue;
     let target;
+    let wantEven = null;
     if(diffKey==='expert'){
       // Expert: 50% cages size 2, remainder randomized (2–3)
       const r=Math.random();
       if(r < 0.50) target=2;
       else target = cfg.min + Math.floor(Math.random() * (cfg.max - cfg.min + 1));
+      // 2-cell cages: 80% even sum (same parity pair), 20% odd sum
+      if(target===2) wantEven = Math.random() < 0.80;
     } else {
       target = Math.max(minSize, Math.min(cfg.max, Math.round(cfg.avg + (Math.random()*2-1)*1.2 )));
       if(minSize === 1 && Math.random()<0.08) target=1;
@@ -156,7 +159,12 @@ function generateCages(sol, diffKey){
       }
       if(!candidates.length) break;
       shuffle(candidates);
-      const pick=candidates[0];
+      let pick=candidates[0];
+      if(target===2 && wantEven!==null && cageCells.length===1){
+        const seedParity=sol[sr][sc]%2;
+        const matched=candidates.filter(([nr,nc])=>((sol[nr][nc]%2)===seedParity)===wantEven);
+        if(matched.length) pick=matched[0];
+      }
       used[pick[0]][pick[1]]=true;
       cageCells.push(pick);
       cageVals.add(sol[pick[0]][pick[1]]);
@@ -743,7 +751,7 @@ document.addEventListener('keydown',e=>{
 
 // init — default: create a game immediately when the page loads
 if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', ()=> newGame('medium'));
+  document.addEventListener('DOMContentLoaded', ()=> newGame('expert'));
 } else {
-  newGame('medium');
+  newGame('expert');
 }
