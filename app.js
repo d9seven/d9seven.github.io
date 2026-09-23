@@ -47,7 +47,7 @@ let difficulty='expert';
 let solution, cages, cageMap, cageSums;
 let board, notes, given;
 let selected=null;
-let isNoteMode=false;
+let isNoteMode=true;
 let autoCheck=true;
 let lightningMode=true;
 let lightningDigit=null;
@@ -67,6 +67,7 @@ function setLightningDigit(n){
   lightningDigit = (lightningDigit===n) ? null : n;
   updateLightningUI();
   render();
+  saveGame();
   return true;
 }
 function clearLightningDigit(){
@@ -78,6 +79,56 @@ let timerSec=0, timerId=null, paused=false;
 let gameOver=false;
 let history=[];
 let cageCellsSet=[];
+
+const SAVE_KEY='killer-sudoku-save-v1';
+function saveGame(){
+  try{
+    if(!solution || !cages || !board) return;
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      v:1, savedAt:Date.now(), difficulty, solution, cages, board,
+      notes: notes.map(r=>r.map(s=>[...s])),
+      given, selected, isNoteMode, autoCheck, lightningMode, lightningDigit,
+      mistakes, timerSec, gameOver
+    }));
+  }catch(e){ /* storage unavailable — game still plays */ }
+}
+function loadGame(){
+  try{
+    const raw=localStorage.getItem(SAVE_KEY);
+    if(!raw) return null;
+    const s=JSON.parse(raw);
+    if(!s || s.v!==1) return null;
+    if(!Array.isArray(s.solution) || s.solution.length!==9) return null;
+    if(!Array.isArray(s.cages) || !s.cages.length) return null;
+    if(!Array.isArray(s.board) || s.board.length!==9) return null;
+    if(!Array.isArray(s.notes) || s.notes.length!==9) return null;
+    if(!DIFFICULTY[s.difficulty]) return null;
+    difficulty=s.difficulty; solution=s.solution; cages=s.cages; board=s.board;
+    notes=s.notes.map(r=>r.map(a=>new Set(a)));
+    given=s.given; selected=s.selected; isNoteMode=!!s.isNoteMode;
+    autoCheck=s.autoCheck!==false; lightningMode=s.lightningMode!==false;
+    lightningDigit=s.lightningDigit; mistakes=s.mistakes||0;
+    timerSec=s.timerSec||0; gameOver=!!s.gameOver; history=[];
+    buildMaps();
+    return true;
+  }catch(e){ return null; }
+}
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function resumeSavedGame(){
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('active', b.dataset.diff===difficulty));
+  document.getElementById('difficultyPill').textContent=DIFFICULTY[difficulty].label;
+  document.getElementById('mistakes').textContent=`${mistakes}/3`;
+  hideGameOver();
+  updateNotesBtn();
+  updateLightningUI();
+  paused=false;
+  document.getElementById('pauseOverlay').style.display='none';
+  renderTimer();
+  startTimer();
+  render();
+  if(gameOver && mistakes>=3) showGameOver();
+  updateCageInfo();
+}
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function generateSolution(){
@@ -273,7 +324,7 @@ function newGame(diff){
   board=Array(9).fill(0).map(()=>Array(9).fill(0));
   notes=Array(9).fill(0).map(()=>Array(9).fill(0).map(()=>new Set()));
   given=Array(9).fill(0).map(()=>Array(9).fill(false));
-  selected=null; mistakes=0; isNoteMode=false; lightningDigit=null; history=[];
+  selected=null; mistakes=0; isNoteMode=true; lightningDigit=null; history=[];
   hideGameOver();
   document.getElementById('mistakes').textContent='0/3';
   updateNotesBtn();
@@ -287,6 +338,7 @@ function newGame(diff){
   resetTimer();
   startTimer();
   render();
+  saveGame();
 }
 
 function startTimer(){ clearInterval(timerId); timerId=setInterval(()=>{ if(!paused){ timerSec++; renderTimer(); }},1000); }
@@ -313,6 +365,7 @@ function undo(){
     startTimer();
   }
   render();
+  saveGame();
 }
 
 function getErrors(){
@@ -396,18 +449,18 @@ function setValue(n){
     if(board[r][c] && board[r][c]!==0 && solution[r][c]!==board[r][c] && autoCheck){
       mistakes++;
       document.getElementById('mistakes').textContent=`${mistakes}/3`;
-      if(mistakes>=3){ render(); showGameOver(); return; }
+      if(mistakes>=3){ render(); saveGame(); showGameOver(); return; }
     }
   }
   render();
-  checkWin();
+  if(!checkWin()) saveGame();
 }
 function erase(){
   if(gameOver) return;
   if(!selected) return;
   const [r,c]=selected; if(given[r][c]) return;
   pushHistory();
-  board[r][c]=0; notes[r][c].clear(); render();
+  board[r][c]=0; notes[r][c].clear(); render(); saveGame();
 }
 function hint(){
   if(gameOver) return;
@@ -433,7 +486,7 @@ function hint(){
   for(let rr=br;rr<br+3;rr++) for(let cc=bc;cc<bc+3;cc++){ if(rr!==r||cc!==c) notes[rr][cc].delete(n); }
   if(r===c) for(let k=0;k<9;k++) if(k!==r) notes[k][k].delete(n);
   if(r+c===8) for(let k=0;k<9;k++){ const rr=k, cc=8-k; if(rr!==r||cc!==c) notes[rr][cc].delete(n); }
-  render(); checkWin();
+  render(); if(!checkWin()) saveGame();
   // flash
   const cellEl=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
   if(cellEl){ cellEl.classList.add('hint'); setTimeout(()=>cellEl.classList.remove('hint'),600)}
@@ -445,6 +498,7 @@ function checkWin(){
   // verify all filled
   for(let r=0;r<9;r++)for(let c=0;c<9;c++) if(board[r][c]===0) return false;
   clearInterval(timerId);
+  clearSave();
   setTimeout(()=>{ alert(`🎉 Killer Sudoku solved in ${document.getElementById('timer').textContent}!`); },150);
   return true;
 }
@@ -536,6 +590,7 @@ function fillNotes(){
     if(cand.length) filledCount++;
   }
   render();
+  saveGame();
   // brief feedback on button
   const btn=document.getElementById('fillNotesBtn');
   if(btn){
@@ -645,12 +700,12 @@ function render(){
             if(r+c===8) for(let k=0;k<9;k++){ const rr=k, cc=8-k; if(rr!==r||cc!==c) notes[rr][cc].delete(lightningDigit); }
             if(solution[r][c]!==lightningDigit && autoCheck){
               mistakes++; document.getElementById('mistakes').textContent=`${mistakes}/3`;
-              if(mistakes>=3){ render(); showGameOver(); return; }
+              if(mistakes>=3){ render(); saveGame(); showGameOver(); return; }
             }
           }
         }
         selected=[r,c];
-        render(); checkWin(); updateCageInfo(); return;
+        render(); if(!checkWin()) saveGame(); updateCageInfo(); return;
       }
       selectCell(r,c);
     });
@@ -693,7 +748,10 @@ for(let n=1;n<=9;n++){
 }
 
 // events
-document.getElementById('newGameBtn').addEventListener('click',()=>newGame());
+document.getElementById('newGameBtn').addEventListener('click',()=>{
+  if(!confirm('Start a new game? Your current progress will be lost.')) return;
+  newGame();
+});
 document.getElementById('restartBtn')?.addEventListener('click',()=>{
   if(!confirm('Restart this puzzle?')) return;
   board=Array(9).fill(0).map(()=>Array(9).fill(0));
@@ -711,10 +769,19 @@ document.getElementById('notesBtn').addEventListener('click',()=>{
   updateNotesBtn();
   if(lightningMode && lightningDigit) render();
   updateLightningUI();
+  saveGame();
 });
 document.getElementById('hintBtn').addEventListener('click',hint);
 document.getElementById('pauseBtn')?.addEventListener('click',togglePause);
-document.querySelectorAll('.diff-btn').forEach(b=>b.addEventListener('click',()=>newGame(b.dataset.diff)));
+document.querySelectorAll('.diff-btn').forEach(b=>b.addEventListener('click',()=>{
+  const target=b.dataset.diff;
+  if(target===difficulty) return;
+  const filled = board && board.flat().some(v=>v!==0);
+  if(filled || mistakes>0){
+    if(!confirm(`Switch to ${DIFFICULTY[target].label}? Your current progress will be lost.`)) return;
+  }
+  newGame(target);
+}));
 document.getElementById('autoCheckSwitch')?.addEventListener('click',function(){ autoCheck=!autoCheck; this.classList.toggle('active',autoCheck); render();});
 document.getElementById('lightningSwitch').addEventListener('click',function(){
   lightningMode=!lightningMode;
@@ -722,7 +789,73 @@ document.getElementById('lightningSwitch').addEventListener('click',function(){
   this.classList.toggle('active', lightningMode);
   updateLightningUI();
   render();
+  saveGame();
 });
+
+// Sum combinations lookup (sum.csv: cage size × sum → distinct-digit combos)
+let SUM_COMBOS=null;
+function parseSumCsv(text){
+  const map={};
+  const lines=text.trim().split(/\r?\n/);
+  for(let i=1;i<lines.length;i++){
+    const line=lines[i].trim(); if(!line) continue;
+    const m=line.match(/^(\d+),(\d+),\d+,(.*)$/);
+    if(!m) continue;
+    const size=parseInt(m[1],10), sum=parseInt(m[2],10);
+    let rest=m[3].trim();
+    if(rest.startsWith('"') && rest.endsWith('"')) rest=rest.slice(1,-1);
+    const combos=rest.split(',').map(s=>s.trim().split('-').map(Number)).filter(a=>a.length===size);
+    if(!map[size]) map[size]={};
+    map[size][sum]=combos;
+  }
+  return map;
+}
+function renderSumsModal(){
+  const sizeSel=document.getElementById('sumsSize'), sumSel=document.getElementById('sumsSum');
+  const list=document.getElementById('sumsList'), count=document.getElementById('sumsCount');
+  if(!SUM_COMBOS){ list.innerHTML=''; count.textContent='Combo data unavailable.'; sumSel.innerHTML=''; return; }
+  const size=parseInt(sizeSel.value,10);
+  const sums=Object.keys(SUM_COMBOS[size]||{}).map(Number).sort((a,b)=>a-b);
+  const prev=sumSel.value;
+  sumSel.innerHTML=sums.map(s=>`<option value="${s}">${s}</option>`).join('');
+  if(sums.includes(parseInt(prev,10))) sumSel.value=prev;
+  const sum=parseInt(sumSel.value,10);
+  const combos=(SUM_COMBOS[size]||{})[sum]||[];
+  count.innerHTML=`<b>${combos.length}</b> combo${combos.length===1?'':'s'} for <b>${size} cells</b> → sum <b>${sum}</b>`;
+  const digitSet=[...new Set(combos.flat())].sort((a,b)=>a-b);
+  const digitsBox=document.getElementById('sumsDigits');
+  digitsBox.innerHTML=`<div class="digits-title">Digits that can appear (${digitSet.length} unique)</div><div class="digits-chips">${digitSet.map(d=>`<span class="digit-chip">${d}</span>`).join('')}</div>`;
+  list.innerHTML=combos.map(c=>`<div class="sums-row"><span class="combo">${c.join(' + ')} = ${sum}</span><span class="badge">${size} cells</span></div>`).join('');
+}
+function openSumsModal(){
+  const overlay=document.getElementById('sumsOverlay');
+  const sizeSel=document.getElementById('sumsSize');
+  if(selected){
+    const idx=cageMap[selected[0]][selected[1]];
+    const cg=cages[idx];
+    if(cg && SUM_COMBOS && SUM_COMBOS[cg.cells.length] && SUM_COMBOS[cg.cells.length][cg.sum]){
+      sizeSel.value=String(cg.cells.length);
+      renderSumsModal();
+      document.getElementById('sumsSum').value=String(cg.sum);
+      renderSumsModal();
+    } else renderSumsModal();
+  } else renderSumsModal();
+  overlay.hidden=false;
+  document.getElementById('sumsClose').focus();
+  document.addEventListener('keydown',closeSumsOnEscape);
+}
+function closeSumsModal(){
+  document.getElementById('sumsOverlay').hidden=true;
+  document.removeEventListener('keydown',closeSumsOnEscape);
+  document.getElementById('sumsBtn').focus();
+}
+function closeSumsOnEscape(e){ if(e.key==='Escape'){ closeSumsModal(); e.stopPropagation(); } }
+document.getElementById('sumsBtn').addEventListener('click',openSumsModal);
+document.getElementById('sumsClose').addEventListener('click',closeSumsModal);
+document.getElementById('sumsOverlay').addEventListener('click',e=>{ if(e.target.id==='sumsOverlay') closeSumsModal(); });
+document.getElementById('sumsSize').addEventListener('change',renderSumsModal);
+document.getElementById('sumsSum').addEventListener('change',renderSumsModal);
+fetchText('sum.csv').then(text=>{ SUM_COMBOS=parseSumCsv(text); renderSumsModal(); }).catch(()=>{ /* keep fallback */ });
 
 document.addEventListener('keydown',e=>{
   if(gameOver && (e.key==='z' || e.key==='Z') && (e.ctrlKey||e.metaKey)){ undo(); e.preventDefault(); return; }
@@ -749,9 +882,16 @@ document.addEventListener('keydown',e=>{
   }
 });
 
-// init — default: create a game immediately when the page loads
+// init — resume saved game when available, else start fresh
+function initGame(){
+  if(loadGame()) resumeSavedGame();
+  else newGame('expert');
+}
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) saveGame(); });
+window.addEventListener('pagehide',saveGame);
+setInterval(saveGame, 15000);
 if(document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', ()=> newGame('expert'));
+  document.addEventListener('DOMContentLoaded', initGame);
 } else {
-  newGame('expert');
+  initGame();
 }

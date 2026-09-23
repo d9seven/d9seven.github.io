@@ -32,6 +32,7 @@
       <div class="stats" style="margin-top:12px">
         <span>Mistakes <b id="mistakes">0/3</b></span><span id="progress">0% filled</span>
       </div>
+      <button class="sums-btn" id="sumsBtn" title="Look up cage sum combinations">∑ Sum combos</button>
     </div>
   </aside>
 
@@ -43,7 +44,7 @@
     </div>
     <div class="controls-row">
       <button class="ctrl" id="undoBtn"><i>↩</i> Undo</button>
-      <button class="ctrl" id="notesBtn"><i>✎</i> Notes</button>
+      <button class="ctrl active" id="notesBtn"><i>✎</i> Notes</button>
       <button class="ctrl" id="fillNotesBtn" title="Auto-fill candidates in all empty cells"><i>▦</i> Fill Notes</button>
       <button class="ctrl" id="hintBtn"><i>💡</i> Hint</button>
       <button class="ctrl active" id="lightningSwitch" title="Toggle Lightning"><i>⚡</i> Lightning</button>
@@ -60,6 +61,31 @@
       <p id="cageDetail">Select a cell to see cage sum and remaining.</p>
     </div>
   </aside>
+</div>
+
+<div class="sums-overlay" id="sumsOverlay" hidden>
+  <div class="sums-modal" role="dialog" aria-modal="true" aria-labelledby="sumsTitle">
+    <div class="sums-head">
+      <h3 id="sumsTitle">Sum combinations</h3>
+      <button class="sums-close" id="sumsClose" aria-label="Close">✕</button>
+    </div>
+    <div class="sums-filters">
+      <label>Cage size
+        <select id="sumsSize">
+          <option value="2">2 cells</option>
+          <option value="3">3 cells</option>
+          <option value="4">4 cells</option>
+          <option value="5">5 cells</option>
+        </select>
+      </label>
+      <label>Sum
+        <select id="sumsSum"></select>
+      </label>
+    </div>
+    <p class="sums-count" id="sumsCount"></p>
+    <div class="sums-digits" id="sumsDigits"></div>
+    <div class="sums-list" id="sumsList"></div>
+  </div>
 </div>
 
 <script src="app.js"></script>
