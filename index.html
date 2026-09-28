@@ -3,20 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SUDOKU — Sudoku Clone</title>
+<title>SUDOKU</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
   <style rel="stylesheet" crossorigin>*{box-sizing:border-box;margin:0;padding:0}:root{--blue:#4a90e2;--blue-dark:#3a7bd5;--orange:#ff8a1e;--bg:#eef3fb;--card:#fff;--text:#2c3e50;--muted:#8a9ab0;--grid:#cbd8ec;--grid-inner:#c0cfe7;--grid-bold:#162f4d;--outer:#162f4d;--cage:#2b3f5e;--danger:#ff5a5a;--success:#3ec48a;--green:#3ec48a}body{background:var(--bg);color:var(--text);flex-direction:column;min-height:100vh;font-family:Inter,system-ui,sans-serif;display:flex}.topbar{z-index:10;background:#fff;border-bottom:1px solid #e6eef8;justify-content:space-between;align-items:center;height:56px;padding:0 18px;display:flex;position:sticky;top:0}.brand{letter-spacing:-.02em;font-size:22px;font-weight:800}.brand b{color:var(--blue)}.brand em{color:#ff8a1e;font-style:normal}.header-timer{flex-shrink:0;align-items:center;gap:8px;display:flex}.header-timer-label{color:var(--muted);letter-spacing:.08em;font-size:11px;font-weight:800}.header-timer .timer{font-variant-numeric:tabular-nums;font-size:18px;font-weight:700}.menu{text-align:center;flex-direction:column;flex:1;align-items:center;gap:6px;max-width:1120px;margin:0 auto;padding:24px 16px;display:flex}.menu h1{color:var(--blue);letter-spacing:-.03em;margin-top:20px;font-family:Nunito,sans-serif;font-size:clamp(32px,6vw,48px);font-weight:800}.menu .subtitle{color:var(--muted);margin-bottom:10px;font-size:15px;font-weight:600}.game-grid{grid-template-columns:repeat(2,1fr);gap:20px;width:100%;max-width:720px;margin-top:12px;display:grid}.game-card{color:inherit;background:var(--card);border:1px solid #e6eef8;border-radius:16px;min-height:180px;text-decoration:none;transition:transform .15s .15s,box-shadow .15s;display:block;position:relative;overflow:hidden;box-shadow:0 8px 30px #3c5a8c14}.game-card:hover{transform:translateY(-3px);box-shadow:0 12px 36px #3c5a8c24}.game-card:focus-visible{outline:3px solid var(--blue);outline-offset:2px}.game-card-bg{background:linear-gradient(135deg,var(--blue),var(--blue-dark));opacity:.07;position:absolute;inset:0}.game-card-inner{z-index:1;text-align:center;flex-direction:column;align-items:center;height:100%;padding:26px 20px;display:flex;position:relative}.game-icon{filter:drop-shadow(0 2px 4px #00000014);margin-bottom:10px;font-size:clamp(36px,8vw,56px);line-height:1}.game-card h2{color:var(--text);margin-bottom:8px;font-family:Nunito,sans-serif;font-size:20px;font-weight:800}.game-desc{color:var(--muted);flex:1;margin-bottom:10px;font-size:13px;font-weight:500;line-height:1.5}.game-cta{color:var(--orange);border-top:1px solid #e6eef8;margin-top:auto;padding-top:12px;font-size:15px;font-weight:800}@media (width<=600px){.topbar{padding:0 12px}.menu{padding:16px 10px}.game-grid{grid-template-columns:1fr;gap:14px;max-width:420px}.game-card{min-height:150px;padding:0}.game-card-inner{padding:20px 14px}.game-icon{font-size:42px}}@media (prefers-reduced-motion:reduce){.game-card{transition:none}.game-card:hover{transform:none}}
 /*$vite$:1*/</style>
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">SUDOKU</div>
-  <div class="header-timer">
-    <span class="header-timer-label">TIME</span>
-    <span class="timer" id="timer">00:00</span>
-  </div>
-</header>
-
 <main class="menu">
   <h1>SUDOKU</h1>
   <p class="subtitle">Sudoku + cage sum constraints · Sudoku X diagonals</p>
