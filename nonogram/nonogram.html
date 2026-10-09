@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Nonogram</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin>(function(){let e=document.createElement(`link`).relList;if(e&&e.supports&&e.supports(`modulepreload`))return;for(let e of document.querySelectorAll(`link[rel="modulepreload"]`))n(e);new MutationObserver(e=>{for(let t of e)if(t.type===`childList`)for(let e of t.addedNodes)e.tagName===`LINK`&&e.rel===`modulepreload`&&n(e)}).observe(document,{childList:!0,subtree:!0});function t(e){let t={};return e.integrity&&(t.integrity=e.integrity),e.referrerPolicy&&(t.referrerPolicy=e.referrerPolicy),t.credentials=e.crossOrigin===`use-credentials`?`include`:e.crossOrigin===`anonymous`?`omit`:`same-origin`,t}function n(e){if(e.ep)return;e.ep=!0;let n=t(e);fetch(e.href,n)}})();var e=[{name:`Diamond`,pattern:[`00011000`,`00111100`,`01111110`,`11111111`,`01111110`,`00111100`,`00011000`,`00001000`]},{name:`Heart`,pattern:[`10000001`,`11000111`,`11111111`,`11111111`,`01111110`,`00111100`,`00011000`,`00001000`]},{name:`Rocket`,pattern:[`00011000`,`00111100`,`01111110`,`11111111`,`01111110`,`00111100`,`01011010`,`00100100`]}],t=8,n=document.getElementById(`nonogramBoard`),r=document.getElementById(`message`),i=document.getElementById(`newPuzzleBtn`),a=document.getElementById(`clearBoardBtn`),o=document.getElementById(`checkBtn`),s=0,c=[],l=`fill`,u=!1;function d(e){let t=[],n=0;for(let r of e)r===`1`?n+=1:n>0&&(t.push(n),n=0);return n>0&&t.push(n),t.length?t:[0]}function f(e){return{rowClues:e.map(e=>d(e)),colClues:Array.from({length:t},(t,n)=>d(e.map(e=>e[n])))}}function p(e){return e.map(e=>e.split(``))}function m(){return Array.from({length:t},()=>Array(t).fill(0))}function h(t){let n=e[t%e.length];s=t%e.length;let r=p(n.pattern);c=m(),g(r),b(`Left click to fill, right click to mark an X.`)}function g(e){let{rowClues:r,colClues:i}=f(e),a=Math.max(...r.map(e=>e.length)),o=Math.max(...i.map(e=>e.length));n.style.gridTemplateColumns=`${a>1?70:52}px repeat(${t}, 34px)`,n.innerHTML=``;let s=document.createElement(`div`);s.className=`corner`,n.appendChild(s);for(let e=0;e<t;e+=1){let t=document.createElement(`div`);t.className=`clue column`,t.dataset.colIndex=String(e);let r=i[e];t.innerHTML=Array.from({length:o},(e,t)=>`<span>${(r[t]??``)||``}</span>`).join(``),n.appendChild(t)}for(let e=0;e<t;e+=1){let i=document.createElement(`div`);i.className=`clue row`,i.dataset.rowIndex=String(e);let o=r[e];i.innerHTML=Array.from({length:Math.max(1,a)},(e,t)=>`<span>${(o[t]??``)||``}</span>`).join(``),n.appendChild(i);for(let r=0;r<t;r+=1){let t=document.createElement(`button`);t.type=`button`,t.className=`cell`,t.dataset.rowIndex=String(e),t.dataset.colIndex=String(r),t.setAttribute(`aria-label`,`Cell ${e+1}, ${r+1}`),t.addEventListener(`pointerdown`,t=>{t.preventDefault(),l=t.button===2?`cross`:`fill`,u=!0,_(e,r,l)}),t.addEventListener(`pointerenter`,()=>{u&&_(e,r,l)}),t.addEventListener(`contextmenu`,t=>{t.preventDefault(),l=`cross`,u=!0,_(e,r,`cross`)}),n.appendChild(t)}}v(e)}function _(t,n,r){let i=c[t][n];r===`cross`?c[t][n]=i===2?0:2:c[t][n]=i===1?0:1,v(e[s].pattern),y()}function v(e){let t=[...n.querySelectorAll(`.cell`)];for(let n of t){let t=Number(n.dataset.rowIndex),r=Number(n.dataset.colIndex),i=c[t][r],a=Number(e[t][r]);n.classList.toggle(`filled`,i===1),n.classList.toggle(`crossed`,i===2),n.classList.toggle(`wrong`,i===1&&a===0)}}function y(){e[s].pattern.every((e,t)=>e.split(``).every((e,n)=>{let r=c[t][n];return e===`1`?r===1:r!==1}))&&b(`Solved: ${e[s].name} complete!`)}function b(e){r.textContent=e}i.addEventListener(`click`,()=>{h(s+1)}),a.addEventListener(`click`,()=>{c=m(),v(e[s].pattern),b(`Board cleared.`)}),o.addEventListener(`click`,()=>{let t=e[s].pattern,n=0;t.forEach((e,t)=>{e.split(``).forEach((e,r)=>{e===`1`&&c[t][r]!==1&&(n+=1),e===`0`&&c[t][r]===1&&(n+=1)})}),b(n===0?`Everything matches the ${e[s].name} pattern.`:`${n} cell${n===1?``:`s`} still need attention.`),v(t)}),window.addEventListener(`pointerup`,()=>{u=!1}),window.addEventListener(`contextmenu`,e=>{e.target.closest(`.cell`)&&e.preventDefault()}),h(0);</script>
+  <style rel="stylesheet" crossorigin>:root{--bg:#eef3fb;--panel:#fff;--ink:#22324a;--muted:#7083a1;--line:#dfeaf7;--line-strong:#9ac;--blue:#4b6bff;--blue-soft:#4b6bff1f;--accent:#ff8a1e;--fill:#193b63;--cross:#ef6b6b;--shadow:#354d751f}*{box-sizing:border-box}body{background:var(--bg);min-height:100vh;color:var(--ink);margin:0;font-family:Inter,sans-serif}button,a{font:inherit}.topbar{border-bottom:1px solid var(--line);background:#fff;justify-content:center;align-items:center;height:56px;padding:0 18px;display:flex}.nav{flex-wrap:wrap;align-items:center;gap:12px;display:flex}.nav a{color:var(--muted);letter-spacing:.04em;text-transform:uppercase;border-radius:10px;padding:8px 10px;font-size:.83rem;font-weight:700;text-decoration:none}.nav a.active{background:var(--blue-soft);color:var(--blue)}.page{gap:24px;max-width:980px;margin:0 auto;padding:28px 16px 40px;display:grid}.panel{background:var(--panel);border:1px solid var(--line);box-shadow:0 12px 32px var(--shadow);border-radius:18px}.controls-panel{flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;padding:22px 24px;display:flex}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.12em;margin:0 0 6px;font-size:.72rem;font-weight:800}h1{color:var(--blue);margin:0;font-family:Nunito,sans-serif;font-size:clamp(2rem,4vw,2.7rem);font-weight:800}.controls{flex-wrap:wrap;gap:10px;display:flex}.btn{cursor:pointer;border:0;border-radius:12px;padding:10px 16px;font-weight:700;transition:transform .15s,box-shadow .15s}.btn:hover{transform:translateY(-1px)}.btn-primary{background:var(--blue);color:#fff;box-shadow:0 12px 24px #4b6bff33}.btn-ghost{color:var(--ink);border:1px solid var(--line);background:#f5f8ff}.message{color:var(--muted);text-align:right;flex:220px;margin:0;font-weight:600}.board-panel{padding:20px}.board-wrap{justify-content:center;align-items:center;display:flex;overflow:auto}.nonogram-board{border:2px solid var(--line-strong);background:#edf3ff;border-radius:14px;gap:2px;padding:12px;display:grid;box-shadow:inset 0 0 0 1px #00000005}.cell,.clue{-webkit-user-select:none;user-select:none;border-radius:6px;justify-content:center;align-items:center;display:flex}.clue{color:var(--ink);background:#ffffff80;min-width:28px;min-height:28px;font-size:.7rem;font-weight:800}.clue.column{flex-direction:column;gap:2px;min-height:64px;padding:4px 2px}.clue.row{gap:2px;min-width:64px;padding:0 6px}.corner{background:#ffffffb3;border-radius:8px;min-width:64px;min-height:64px}.cell{border:1px solid var(--line);cursor:pointer;background:#fff;width:34px;height:34px;padding:0;position:relative}.cell:hover{border-color:var(--blue)}.cell.filled{background:var(--fill);box-shadow:inset 0 0 0 1px #00000014}.cell.crossed:after{content:"✕";color:var(--cross);font-size:1.05rem;font-weight:900}.cell.wrong{background:#ef6b6b2e;border-color:#ef6b6bb3}.cell[data-row-index="0"],.cell[data-row-index="4"],.cell[data-row-index="8"],.cell[data-col-index="0"],.cell[data-col-index="4"],.cell[data-col-index="8"]{border-color:var(--line-strong)}@media (width<=720px){.controls-panel{align-items:flex-start}.message{text-align:left}.cell{width:28px;height:28px}.clue{min-width:24px;min-height:24px;font-size:.62rem}.corner,.clue.row{min-width:54px}}
+/*$vite$:1*/</style>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="nav">
+      <a href="../index.html">Menu</a>
+      <a href="../killer-sudoku/killer-sudoku.html">Killer</a>
+      <a href="../supper-sudoku/supper-sudoku.html">Super</a>
+      <a class="active" href="nonogram.html">Nonogram</a>
+    </nav>
+  </header>
+
+  <main class="page">
+    <section class="panel controls-panel">
+      <div>
+        <p class="eyebrow">Picture Logic</p>
+        <h1>Nonogram</h1>
+      </div>
+
+      <div class="controls">
+        <button id="newPuzzleBtn" class="btn btn-primary" type="button">New Puzzle</button>
+        <button id="clearBoardBtn" class="btn btn-ghost" type="button">Clear</button>
+        <button id="checkBtn" class="btn btn-ghost" type="button">Check</button>
+      </div>
+
+      <p id="message" class="message">Left click to fill, right click to mark an X.</p>
+    </section>
+
+    <section class="panel board-panel">
+      <div class="board-wrap">
+        <div id="nonogramBoard" class="nonogram-board" aria-label="Nonogram board"></div>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>
